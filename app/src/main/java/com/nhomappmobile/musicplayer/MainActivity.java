@@ -18,16 +18,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.nhomappmobile.musicplayer.fragments.AlbumsFragment;
+import com.nhomappmobile.musicplayer.fragments.PlaybackControlsFragment;
 import com.nhomappmobile.musicplayer.fragments.SongsFragment;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private DrawerLayout mDrawerLayout;
+    PlaybackControlsFragment mControlsFragment;
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -47,10 +49,16 @@ public class MainActivity extends AppCompatActivity {
         if (viewPager != null) {
             setupViewPager(viewPager);
         }
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        //FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager((viewPager));
+
+        mControlsFragment = (PlaybackControlsFragment) getFragmentManager().findFragmentById(R.id.fragment_playback_controls);
+
+        if(mControlsFragment == null){
+            throw new IllegalStateException("Missing fragment with id 'controls'. Cannot continue.");
+        }
     }
 
 
@@ -113,20 +121,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public Fragment getItem(int position){
+        public  Fragment getItem(int position){
             return mFragments.get(position);
+
         }
 
         @Override
         public int getCount(){
             return mFragments.size();
+
         }
 
         @Override
         public CharSequence getPageTitle(int position){
             return mFragmentTitles.get(position);
+
         }
     }
+    public void showPlaybackControls(){
+        getSupportFragmentManager().beginTransaction().setCustomAnimations(R.animator.slide_in_from_bottom,R.animator.slide_out_to_bottom, R.animator.slide_in_from_bottom, R.animator.slide_out_to_bottom).show(mControlsFragment).commit();
 
+
+    }
+
+    public void hidePlaybackControls(){
+        getFragmentManager().beginTransaction().hide(mControlsFragment).commit();
+    }
 }
 
