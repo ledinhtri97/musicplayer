@@ -49,18 +49,25 @@ public class SongsFragment extends Fragment {
         if(musicCursor != null && musicCursor.moveToFirst()){
             //Lay cot
             int titleColumn = musicCursor.getColumnIndex(android.provider.MediaStore.Audio.Media.TITLE);
-            int idColumn = musicCursor.getColumnIndex(android.provider.MediaStore.Audio.Media._ID);
+            int idColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media._ID);
             int artistColumn = musicCursor.getColumnIndex(android.provider.MediaStore.Audio.Media.ARTIST);
+            int albumColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM);
+            int albumIdColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID);
+            int durationColumn = musicCursor.getColumnIndex(MediaStore.Audio.Media.DURATION);
             //them nhac vao danh sach list
             do{
                 long thisId = musicCursor.getLong(idColumn);
+                long albumId = musicCursor.getLong(albumIdColumn);
                 String thisTitle = musicCursor.getString(titleColumn);
                 String thisArtist = musicCursor.getString(artistColumn);
-                songlist.add(new SongModel(thisId,thisTitle,thisArtist));
+                //songlist.add(new SongModel(thisId,thisTitle,thisArtist));
+                String thisAlbum = musicCursor.getString(albumColumn);
+                int thisDuration  = musicCursor.getInt(durationColumn);
+                songlist.add(new SongModel(thisId,thisTitle,thisArtist,thisAlbum,albumId,thisDuration));
             }
             while (musicCursor.moveToNext());
         }
-        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(),2));
+        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(),1));
 
         mAdapter = new SongsListAdapter(getActivity(),songlist);
         recyclerView.setAdapter(mAdapter);
