@@ -5,11 +5,14 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+import android.widget.ImageView;
 
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
+import java.lang.ref.WeakReference;
 
 public class ArtworkUtils {
     private  static final Uri mArtworkUri;
@@ -19,17 +22,19 @@ public class ArtworkUtils {
 
     }
 
-    public static final Bitmap getArtworkFromFile(final Context context, final long albumId,int reqWidth,int reqHeight){
+    //public static final Bitmap getArtworkFromFile(final Context context, final long albumId,int reqWidth,int reqHeight){
+    public static final FileDescriptor getArtworkFromFile(final Context context,final long albumId ){
         if (albumId < 0){
             return null;
         }
-        Bitmap artwork = null;
+        FileDescriptor fileDescriptor = null;
         try{
             final Uri uri = ContentUris.withAppendedId(mArtworkUri,albumId);
             final ParcelFileDescriptor parcelFileDescriptor = context.getContentResolver().openFileDescriptor(uri,"r");
             if (parcelFileDescriptor != null){
-                final FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-                artwork = decodeSampleBitmapFromDescriptor(fileDescriptor,reqWidth,reqHeight);
+                //fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+                //artwork = decodeSampleBitmapFromDescriptor(fileDescriptor,reqWidth,reqHeight);
+                fileDescriptor = parcelFileDescriptor.getFileDescriptor();
             }
         } catch (final IllegalStateException e){
 
@@ -38,9 +43,9 @@ public class ArtworkUtils {
         } catch (final OutOfMemoryError evict){
             Log.e("lol", "OutOfMemoryError - getArtworkFromFile - ", evict);
         }
-        return artwork;
+        return fileDescriptor;
     }
-    public static final int calculateInSampleSize(final BitmapFactory.Options options, final int reqWidth, final int reqHeight){
+   /* public static final int calculateInSampleSize(final BitmapFactory.Options options, final int reqWidth, final int reqHeight){
         final int height = options.outHeight;
         final int width = options.outWidth;
         int inSampleSize = 1;
@@ -51,17 +56,49 @@ public class ArtworkUtils {
                 inSampleSize = Math.round((float) width / (float) reqWidth);
             }
             final float totalPixels = width * height;
+*/
+    public static class BitmapWorkerTask extends AsyncTask<BitmapTaskParams,Void,Bitmap>{
+            private final WeakReference<ImageView> imageViewReference;
+            private int data = 0;
 
-            final float totalReqPixelsCap = reqWidth*reqHeight*2;
-
+        //final float totalReqPixelsCap = reqWidth*reqHeight*2;
+/*
             while(totalPixels/(inSampleSize*inSampleSize) > totalReqPixelsCap){
                 inSampleSize++;
             }
         }
-        return inSampleSize;
+        return inSampleSize;*/
+            public BitmapWorkerTask(ImageView imageView){
+                imageViewReference = new WeakReference<ImageView>(imageView);
+            }
+            @Override
+            protected Bitmap doInBackGround(BitmapTaskParams... params){
+                FileDescriptor fileDescriptor = params[0].fileDescriptor;
+                int width = params[0].reqWidth;
+                int height = params[0].reqHeight;
+                return BitmapUtils.decodeSampledBitmapFromDescriptor(fileDescriptor,width,height);
+            }
+           @Override
+           protected void onPostExecute(Bitmap bitmap) {
+               if (imageViewReference != null && bitmap != null) {
+                   final ImageView imageView = imageViewReference.get();
+                   if (imageView != null) {
+                       imageView.setImageBitmap(bitmap);
+                   }
+               }
+           }
     }
+    private static class BitmapTaskParams {
+        FileDescriptor fileDescriptor;
+        int reqWidth,reqHeight;
 
-    public static Bitmap decodeSampleBitmapFromDescriptor(FileDescriptor fileDescriptor,int reqWidth, int reqHeight){
+        BitmapTaskParams(FileDescriptor filedesc,int width, int height) {
+            this.fileDescriptor=filedesc;
+            this.reqWidth = width;
+            this.reqHeight = height;
+        }
+    }
+   /* public static Bitmap decodeSampleBitmapFromDescriptor(FileDescriptor fileDescriptor,int reqWidth, int reqHeight){
 
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
@@ -72,5 +109,14 @@ public class ArtworkUtils {
         options.inJustDecodeBounds = false;
 
         return BitmapFactory.decodeFileDescriptor(fileDescriptor,null,options);
-    }
+    }*/
+   public static void loadBitmap( Context context,ImageView imageView, long albumId,int reqWidth,int reqHeight) {
+       FileDescriptor fileDescriptor=getArtworkFromFile(context,albumId);
+       if (fileDescriptor!=null) {
+           BitmapTaskParams params = new BitmapTaskParams(fileDescriptor, reqWidth, reqHeight);
+           BitmapWorkerTask task = new BitmapWorkerTask(imageView);
+           task.execute(params);
+       }
+   }
+
 }
