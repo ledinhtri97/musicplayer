@@ -1,5 +1,6 @@
 package com.nhomappmobile.musicplayer.adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.media.Image;
 import android.support.v7.widget.RecyclerView;
@@ -11,17 +12,22 @@ import android.widget.TextView;
 
 import com.nhomappmobile.musicplayer.R;
 import com.nhomappmobile.musicplayer.models.SongModel;
+import com.nhomappmobile.musicplayer.utils.ArtworkFetcher;
 import com.nhomappmobile.musicplayer.utils.ArtworkUtils;
+import com.nhomappmobile.musicplayer.utils.MbUtils;
 
 import java.util.List;
 
 public class SongsListAdapter extends RecyclerView.Adapter<SongsListAdapter.AllSongsGridHolder> {
     private List<SongModel> allSongsList; //Chứa list nhạc, các class Songmodel
     private Context mContext;
+    private final ArtworkFetcher mArtworkFetcher;
     //Phương thức cập nhật list nhạc
-    public SongsListAdapter(Context context,List<SongModel> allSongsList){
+    //public SongsListAdapter(Context context,List<SongModel> allSongsList){
+    public SongsListAdapter(Activity context, List<SongModel> allSongsList) {
         this.allSongsList = allSongsList;
         this.mContext = context;
+        mArtworkFetcher = MbUtils.getImageFetcher(context);
     }
 
     @Override
@@ -38,7 +44,9 @@ public class SongsListAdapter extends RecyclerView.Adapter<SongsListAdapter.AllS
         allSongsGridHolder.title.setText(allSongsItem.getTitle());
         allSongsGridHolder.artist.setText(allSongsItem.getArtist());
        // allSongsGridHolder.albumArt.setImageBitmap(ArtworkUtils.getArtworkFromFile(mContext,allSongsItem.getAlbumId(),25,25));
-        ArtworkUtils.loadBitmap(mContext,allSongsGridHolder.albumArt,allSongsItem.getAlbumId(),25,25);
+       // ArtworkUtils.loadBitmap(mContext,allSongsGridHolder.albumArt,allSongsItem.getAlbumId(),25,25);
+        mArtworkFetcher.loadAlbumImage(allSongsItem.getArtist(), allSongsItem.getAlbum(), allSongsItem.getAlbumId(),
+                allSongsGridHolder.albumArt);
     }
 
     @Override

@@ -29,6 +29,8 @@ public class SongsFragment extends Fragment {
         RecyclerView recyclerView = (RecyclerView) inflater.inflate(
                 R.layout.fragment_main,container,false
         );
+        if (songlist !=null)
+            songlist.clear();
         //Lay du lieu danh sach nhac
         setupSongsList(recyclerView);
 
